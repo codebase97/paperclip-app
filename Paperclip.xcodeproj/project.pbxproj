@@ -15,6 +15,7 @@
 		A10000000000000000000006 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* Logger.swift */; };
 		A10000000000000000000007 /* StackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* StackView.swift */; };
 		A10000000000000000000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* Assets.xcassets */; };
+		A10000000000000000000009 /* PastePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* PastePickerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +28,7 @@
 		A20000000000000000000007 /* StackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StackView.swift; sourceTree = "<group>"; };
 		A20000000000000000000008 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A20000000000000000000009 /* Paperclip.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Paperclip.entitlements; sourceTree = "<group>"; };
+		A2000000000000000000000A /* PastePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PastePickerView.swift; sourceTree = "<group>"; };
 		A30000000000000000000001 /* Paperclip.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Paperclip.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -85,6 +87,7 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000007 /* StackView.swift */,
+				A2000000000000000000000A /* PastePickerView.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -173,6 +176,7 @@
 				A10000000000000000000005 /* ClipboardWatcher.swift in Sources */,
 				A10000000000000000000006 /* Logger.swift in Sources */,
 				A10000000000000000000007 /* StackView.swift in Sources */,
+				A10000000000000000000009 /* PastePickerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

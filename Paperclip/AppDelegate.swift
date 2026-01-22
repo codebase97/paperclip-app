@@ -6,6 +6,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var popover: NSPopover!
     private var hotkeyManager: HotkeyManager!
     private var clipboardWatcher: ClipboardWatcher!
+    private var pastePickerWindow: NSWindow?
+    private var cachedItems: [StackItem] = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Create status bar item
@@ -109,21 +111,74 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Pull and paste (⌘⌥V)
+    /// Show paste picker (⌘⌥V)
     private func pullAndPaste() {
-        Task {
+        Task { @MainActor in
             do {
-                let item = try await PaperclipService.shared.peek()
-                copyToClipboard(item.content)
-
-                // Small delay then paste
-                try await Task.sleep(nanoseconds: 100_000_000)
-                simulatePaste()
-
-                Logger.log("📋 Pulled and pasted: \(item.content.prefix(50))...")
+                let response = try await PaperclipService.shared.getStack(limit: 10)
+                self.cachedItems = response.items
+                self.showPastePicker()
             } catch {
-                Logger.log("❌ Pull+paste failed: \(error)")
+                Logger.log("❌ Failed to load stack: \(error)")
             }
+        }
+    }
+
+    private func showPastePicker() {
+        // Close existing picker if open
+        pastePickerWindow?.close()
+
+        // Get mouse location for positioning
+        let mouseLocation = NSEvent.mouseLocation
+
+        // Create picker view
+        let pickerView = PastePickerView(items: cachedItems) { [weak self] selectedItem in
+            self?.pasteItem(selectedItem)
+            self?.pastePickerWindow?.close()
+            self?.pastePickerWindow = nil
+        } onCancel: { [weak self] in
+            self?.pastePickerWindow?.close()
+            self?.pastePickerWindow = nil
+        }
+
+        let hostingView = NSHostingView(rootView: pickerView)
+        hostingView.frame = NSRect(x: 0, y: 0, width: 340, height: min(400, CGFloat(cachedItems.count * 60 + 50)))
+
+        // Create window
+        let window = NSPanel(
+            contentRect: hostingView.frame,
+            styleMask: [.nonactivatingPanel, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        window.contentView = hostingView
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.level = .floating
+        window.hasShadow = true
+
+        // Position near mouse
+        let windowFrame = NSRect(
+            x: mouseLocation.x - 170,
+            y: mouseLocation.y - hostingView.frame.height,
+            width: hostingView.frame.width,
+            height: hostingView.frame.height
+        )
+        window.setFrame(windowFrame, display: true)
+
+        pastePickerWindow = window
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func pasteItem(_ item: StackItem) {
+        copyToClipboard(item.content)
+        clipboardWatcher?.markAsPulled(item.content)
+
+        // Small delay then paste
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            self?.simulatePaste()
+            Logger.log("📋 Pasted: \(item.content.prefix(50))...")
         }
     }
 
