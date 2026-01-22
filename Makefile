@@ -1,17 +1,22 @@
-.PHONY: build run clean install uninstall release
+.PHONY: build run clean install uninstall release prep
 
 APP_NAME = Paperclip
 BUNDLE_ID = cc.airbase.paperclip
 BUILD_DIR = build
 INSTALL_DIR = /Applications
 
+# Prep: clean extended attributes that break codesign
+prep:
+	@xattr -cr Paperclip Paperclip.xcodeproj 2>/dev/null || true
+	@rm -rf $(BUILD_DIR)
+
 # Debug build
-build:
-	xcodebuild -project $(APP_NAME).xcodeproj -scheme $(APP_NAME) -configuration Debug -derivedDataPath $(BUILD_DIR) build
+build: prep
+	xcodebuild -project $(APP_NAME).xcodeproj -scheme $(APP_NAME) -configuration Debug -derivedDataPath $(BUILD_DIR) build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
 # Release build
-release:
-	xcodebuild -project $(APP_NAME).xcodeproj -scheme $(APP_NAME) -configuration Release -derivedDataPath $(BUILD_DIR) build
+release: prep
+	xcodebuild -project $(APP_NAME).xcodeproj -scheme $(APP_NAME) -configuration Release -derivedDataPath $(BUILD_DIR) build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
 # Build and run
 run: build

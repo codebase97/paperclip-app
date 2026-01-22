@@ -88,18 +88,21 @@ struct StackItemRow: View {
                     .lineLimit(2)
                     .font(.system(.body, design: .monospaced))
 
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     Text(item.relativeTime)
                         .font(.caption)
                         .foregroundColor(.secondary)
 
-                    if let metadata = item.metadata, let source = metadata.source {
-                        Text(source)
-                            .font(.caption)
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 1)
-                            .background(Color.accentColor.opacity(0.2))
-                            .cornerRadius(3)
+                    if let metadata = item.metadata {
+                        // Source app (blue)
+                        if let source = metadata.source {
+                            MetadataTag(text: source, color: .blue)
+                        }
+
+                        // Device name (gray)
+                        if let deviceName = metadata.device_name {
+                            MetadataTag(text: deviceName, color: .gray)
+                        }
                     }
                 }
             }
@@ -122,6 +125,21 @@ struct StackItemRow: View {
         .onTapGesture(count: 2) {
             onCopy()
         }
+    }
+}
+
+struct MetadataTag: View {
+    let text: String
+    let color: Color
+
+    var body: some View {
+        Text(text)
+            .font(.caption)
+            .foregroundColor(color)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
+            .background(color.opacity(0.15))
+            .cornerRadius(4)
     }
 }
 
