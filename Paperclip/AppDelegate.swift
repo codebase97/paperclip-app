@@ -182,36 +182,62 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Push current selection (⌘⌥P)
+    /// Push clipboard contents (⌘⌥P)
     private func pushSelection() {
-        // Get current selection via clipboard
         let pasteboard = NSPasteboard.general
 
-        // Save current clipboard
-        let savedContent = pasteboard.string(forType: .string)
+        guard let text = pasteboard.string(forType: .string), !text.isEmpty else {
+            Logger.log("⚠️ Nothing on clipboard to push")
+            showNotification(title: "Paperclip", message: "Nothing on clipboard to push")
+            return
+        }
 
-        // Simulate Cmd+C to copy selection
-        simulateCopy()
-
-        // Wait for clipboard to update
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-            if let text = pasteboard.string(forType: .string), text != savedContent {
-                // Push to Paperclip
-                Task {
-                    do {
-                        try await PaperclipService.shared.push(content: text, type: "text")
-                        Logger.log("📤 Pushed selection: \(text.prefix(50))...")
-                    } catch {
-                        Logger.log("❌ Push failed: \(error)")
-                    }
+        Task {
+            do {
+                let response = try await PaperclipService.shared.push(content: text, type: "clipboard")
+                Logger.log("📤 Pushed: \(text.prefix(50))...")
+                await MainActor.run {
+                    showNotification(title: "Pushed to Paperclip", message: "\(text.prefix(40))...")
+                }
+            } catch {
+                Logger.log("❌ Push failed: \(error)")
+                await MainActor.run {
+                    showNotification(title: "Push Failed", message: error.localizedDescription)
                 }
             }
+        }
+    }
 
-            // Restore original clipboard
-            if let saved = savedContent {
-                pasteboard.clearContents()
-                pasteboard.setString(saved, forType: .string)
-            }
+    private func showNotification(title: String, message: String) {
+        // Create a brief HUD-style notification
+        let hudWindow = NSPanel(
+            contentRect: NSRect(x: 0, y: 0, width: 280, height: 60),
+            styleMask: [.nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        hudWindow.isOpaque = false
+        hudWindow.backgroundColor = .clear
+        hudWindow.level = .floating
+        hudWindow.hasShadow = true
+
+        let hudView = NSHostingView(rootView: HUDNotificationView(title: title, message: message))
+        hudView.frame = hudWindow.contentView!.bounds
+        hudWindow.contentView = hudView
+
+        // Center on screen
+        if let screen = NSScreen.main {
+            let screenFrame = screen.visibleFrame
+            let x = screenFrame.midX - 140
+            let y = screenFrame.maxY - 100
+            hudWindow.setFrameOrigin(NSPoint(x: x, y: y))
+        }
+
+        hudWindow.orderFront(nil)
+
+        // Auto-dismiss after 1.5 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            hudWindow.close()
         }
     }
 
