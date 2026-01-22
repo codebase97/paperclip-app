@@ -1,4 +1,4 @@
-.PHONY: build run clean install uninstall release prep
+.PHONY: build run clean install uninstall release prep kill
 
 APP_NAME = Paperclip
 BUNDLE_ID = cc.airbase.paperclip
@@ -18,13 +18,21 @@ build: prep
 release: prep
 	xcodebuild -project $(APP_NAME).xcodeproj -scheme $(APP_NAME) -configuration Release -derivedDataPath $(BUILD_DIR) build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
-# Build and run
+# Build and run (kills existing instance first)
 run: build
+	@pkill -x $(APP_NAME) 2>/dev/null || true
+	@sleep 0.5
 	open $(BUILD_DIR)/Build/Products/Debug/$(APP_NAME).app
 
-# Run release build
+# Run release build (kills existing instance first)
 run-release: release
+	@pkill -x $(APP_NAME) 2>/dev/null || true
+	@sleep 0.5
 	open $(BUILD_DIR)/Build/Products/Release/$(APP_NAME).app
+
+# Kill running instance
+kill:
+	@pkill -x $(APP_NAME) 2>/dev/null && echo "Killed $(APP_NAME)" || echo "$(APP_NAME) not running"
 
 # Clean build artifacts
 clean:
@@ -60,4 +68,5 @@ help:
 	@echo "  make install      Install to /Applications"
 	@echo "  make uninstall    Remove from /Applications"
 	@echo "  make clean        Clean build artifacts"
+	@echo "  make kill         Kill running instance"
 	@echo "  make xcode        Open in Xcode"

@@ -13,7 +13,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         if let button = statusItem.button {
             button.image = NSImage(systemSymbolName: "paperclip", accessibilityDescription: "Paperclip")
-            button.action = #selector(togglePopover)
+            button.action = #selector(handleClick)
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
 
         // Create popover with stack view
@@ -21,6 +22,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentSize = NSSize(width: 320, height: 400)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(rootView: StackView())
+
+        // Create right-click menu
+        setupMenu()
 
         // Setup hotkeys
         hotkeyManager = HotkeyManager()
@@ -42,6 +46,39 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         Logger.log("📎 Paperclip started")
     }
 
+    private func setupMenu() {
+        let menu = NSMenu()
+        menu.addItem(NSMenuItem(title: "Open Paperclip", action: #selector(showPopover), keyEquivalent: ""))
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(NSMenuItem(title: "Quit Paperclip", action: #selector(quitApp), keyEquivalent: "q"))
+        statusItem.menu = nil  // Don't show menu on left click
+    }
+
+    @objc func handleClick() {
+        guard let event = NSApp.currentEvent else { return }
+
+        if event.type == .rightMouseUp {
+            // Right click: show menu
+            let menu = NSMenu()
+            menu.addItem(NSMenuItem(title: "Open Paperclip", action: #selector(showPopover), keyEquivalent: ""))
+            menu.addItem(NSMenuItem.separator())
+            menu.addItem(NSMenuItem(title: "Quit Paperclip", action: #selector(quitApp), keyEquivalent: "q"))
+            statusItem.menu = menu
+            statusItem.button?.performClick(nil)
+            statusItem.menu = nil  // Reset so left click works normally
+        } else {
+            // Left click: toggle popover
+            togglePopover()
+        }
+    }
+
+    @objc func showPopover() {
+        if let button = statusItem.button {
+            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            NSApp.activate(ignoringOtherApps: true)
+        }
+    }
+
     @objc func togglePopover() {
         if let button = statusItem.button {
             if popover.isShown {
@@ -51,6 +88,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 NSApp.activate(ignoringOtherApps: true)
             }
         }
+    }
+
+    @objc func quitApp() {
+        NSApp.terminate(nil)
     }
 
     // MARK: - Stack Operations
